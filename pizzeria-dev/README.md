@@ -62,6 +62,15 @@ su consumo de stock ya registrado en el historial). Podés correrlo de nuevo
 si querés resetear los datos de muestra — vuelve a escribir los mismos
 documentos.
 
+### Catálogo real (empanadas, faina, pizzas y promos)
+
+Con el mismo `serviceAccountKey.json` del paso anterior, `npm run seed:menu`
+carga el catálogo real de la pizzería (30 empanadas, faina, 8 pizzas
+familiares y las promociones de almuerzo/todo el día/mostrador) en la
+colección `products`, con precios. Se puede correr las veces que haga
+falta: si cambian los precios, editá `scripts/seedMenu.mjs` y volvé a
+correrlo.
+
 ## 4. Correr la app
 
 ```bash
@@ -87,6 +96,7 @@ src/components/Login.jsx        pantalla de login
 src/components/Stock.jsx        módulo de control de stock (foco principal de la app)
 src/App.jsx                    layout, Dashboard, Pedidos, Clientes, Reportes
 scripts/seed.mjs               carga de datos iniciales de demostración (una sola vez)
+scripts/seedMenu.mjs           carga el catálogo real (empanadas, faina, pizzas, promos)
 ```
 
 ## Datos y stock: cómo funciona
