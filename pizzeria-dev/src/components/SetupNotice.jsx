@@ -5,10 +5,10 @@ import { C } from "../theme.js";
 export default function SetupNotice() {
   return (
     <div
-      className="w-full flex items-center justify-center"
-      style={{ fontFamily: "'Inter', system-ui, sans-serif", background: C.cream, minHeight: 640 }}
+      className="w-full min-h-[100dvh] flex items-center justify-center p-4"
+      style={{ fontFamily: "'Inter', system-ui, sans-serif", background: C.cream }}
     >
-      <div className="max-w-md rounded-lg p-6 flex flex-col gap-2" style={{ background: C.paper, border: `1px solid ${C.border}` }}>
+      <div className="w-full max-w-md rounded-lg p-6 flex flex-col gap-2" style={{ background: C.paper, border: `1px solid ${C.border}` }}>
         <div className="flex items-center gap-2">
           <AlertTriangle size={18} style={{ color: C.crustDark }} />
           <h1 className="text-base font-bold" style={{ color: C.ink }}>Falta configurar Firebase</h1>

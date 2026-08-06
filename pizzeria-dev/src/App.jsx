@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from "react";
 import {
-  Home, ClipboardList, Package, Users, BarChart3, Plus, X, Search,
+  Home, ClipboardList, Package, Users, BarChart3, Plus, Minus, X, Search,
   Truck, Store, Flame, ChefHat, CheckCircle2, AlertTriangle, Phone,
   MapPin, Clock, TrendingUp, DollarSign, ShoppingBag, Send, LogOut
 } from "lucide-react";
@@ -15,6 +15,7 @@ import { useCollection } from "./hooks/useCollection.js";
 import { createOrder as createOrderService, advanceOrder as advanceOrderService } from "./services/orders.js";
 import Login from "./components/Login.jsx";
 import Stock from "./components/Stock.jsx";
+import ProductPicker from "./components/ProductPicker.jsx";
 
 const STATUS_LABEL = {
   Nuevo: "Nuevo",
@@ -159,24 +160,20 @@ export default function PizzeriaApp() {
 
   return (
     <div
-      className="w-full flex"
+      className="w-full h-[100dvh] flex flex-col md:flex-row overflow-hidden"
       style={{
         fontFamily: "'Inter', system-ui, sans-serif",
         background: C.cream,
-        minHeight: 640,
-        borderRadius: 12,
-        overflow: "hidden",
-        border: `1px solid ${C.border}`,
       }}
     >
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Caveat:wght@600;700&family=Space+Grotesk:wght@500;700&display=swap');
       `}</style>
 
-      {/* Sidebar */}
+      {/* Sidebar (escritorio) */}
       <div
-        className="flex flex-col shrink-0"
-        style={{ width: 200, background: C.ink, color: C.chalk }}
+        className="hidden md:flex md:w-[200px] flex-col shrink-0"
+        style={{ background: C.ink, color: C.chalk }}
       >
         <div className="px-5 pt-5 pb-4" style={{ borderBottom: `1px solid ${C.boardLine}` }}>
           <div style={{ fontFamily: "'Caveat', cursive", fontSize: 30, lineHeight: 1, color: "#FFF2DE" }}>
@@ -224,16 +221,16 @@ export default function PizzeriaApp() {
       </div>
 
       {/* Main content */}
-      <div className="flex-1 flex flex-col min-w-0">
+      <div className="flex-1 flex flex-col min-w-0 min-h-0">
         <div
-          className="flex items-center justify-between px-6 py-4 shrink-0"
+          className="flex items-center justify-between gap-3 px-4 md:px-6 py-3 md:py-4 shrink-0"
           style={{ borderBottom: `1px solid ${C.border}`, background: C.paper }}
         >
-          <div>
-            <h1 className="text-lg font-bold" style={{ fontFamily: "'Space Grotesk', sans-serif", color: C.ink }}>
+          <div className="min-w-0">
+            <h1 className="text-base md:text-lg font-bold truncate" style={{ fontFamily: "'Space Grotesk', sans-serif", color: C.ink }}>
               {navItems.find((n) => n.id === tab)?.label}
             </h1>
-            <p className="text-xs" style={{ color: C.muted }}>
+            <p className="text-xs truncate" style={{ color: C.muted }}>
               {tab === "pedidos" && "Tablero de pedidos en tiempo real"}
               {tab === "inicio" && `Hoy, ${fmtDate(today)}`}
               {tab === "stock" && "Control de ingredientes y recetas"}
@@ -241,16 +238,28 @@ export default function PizzeriaApp() {
               {tab === "reportes" && "Resumen de ventas y consumo"}
             </p>
           </div>
-          <button
-            onClick={() => setModalOpen(true)}
-            className="flex items-center gap-1.5 px-3.5 py-2 rounded-md text-sm font-semibold text-white"
-            style={{ background: C.tomato }}
-          >
-            <Plus size={16} /> Nuevo pedido
-          </button>
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              onClick={() => setModalOpen(true)}
+              className="flex items-center gap-1.5 px-3 md:px-3.5 py-2 rounded-md text-sm font-semibold text-white"
+              style={{ background: C.tomato }}
+            >
+              <Plus size={16} />
+              <span className="hidden sm:inline">Nuevo pedido</span>
+              <span className="sm:hidden">Nuevo</span>
+            </button>
+            <button
+              onClick={logout}
+              title="Cerrar sesión"
+              className="md:hidden p-2 rounded-md"
+              style={{ border: `1px solid ${C.border}`, color: C.inkSoft }}
+            >
+              <LogOut size={16} />
+            </button>
+          </div>
         </div>
 
-        <div className="flex-1 overflow-auto p-6">
+        <div className="flex-1 overflow-auto p-4 md:p-6">
           {dataLoading ? (
             <div className="text-sm" style={{ color: C.muted }}>Cargando datos...</div>
           ) : (
@@ -287,6 +296,31 @@ export default function PizzeriaApp() {
             </>
           )}
         </div>
+
+        {/* Navegación inferior (móvil) */}
+        <nav
+          className="md:hidden shrink-0 grid grid-cols-5"
+          style={{ background: C.ink, paddingBottom: "env(safe-area-inset-bottom)" }}
+        >
+          {navItems.map((n) => {
+            const Icon = n.icon;
+            const active = tab === n.id;
+            return (
+              <button
+                key={n.id}
+                onClick={() => setTab(n.id)}
+                className="flex flex-col items-center gap-0.5 py-2"
+                style={{
+                  color: active ? "#FFF7EA" : "#9C9184",
+                  borderTop: `3px solid ${active ? C.tomato : "transparent"}`,
+                }}
+              >
+                <Icon size={18} />
+                <span className="text-[10px] font-medium">{n.label}</span>
+              </button>
+            );
+          })}
+        </nav>
       </div>
 
       {modalOpen && (
@@ -328,14 +362,14 @@ function Dashboard({ orders, liveOrders, todaySales, lowStock, reconquestCustome
 
   return (
     <div className="flex flex-col gap-5">
-      <div className="grid grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 xl:grid-cols-4 gap-3">
         <MetricCard icon={DollarSign} label="Ventas hoy" value={fmtMoney(todaySales)} tone="tomato" />
         <MetricCard icon={ClipboardList} label="Pedidos en curso" value={liveOrders.length} tone="ink" />
         <MetricCard icon={AlertTriangle} label="Alertas de stock" value={lowStock.length} tone="crust" sub={lowStock.length ? lowStock.map((i) => i.name).join(", ") : "Todo en orden"} />
         <MetricCard icon={Users} label="Para reconquistar" value={reconquestCustomers.length} tone="basil" sub="Sin pedir hace +30 días" />
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <div className="rounded-lg p-4" style={{ background: C.paper, border: `1px solid ${C.border}` }}>
           <h3 className="text-sm font-semibold mb-3" style={{ color: C.ink }}>
             Estado de la cocina
@@ -403,11 +437,13 @@ function Dashboard({ orders, liveOrders, todaySales, lowStock, reconquestCustome
 function Pedidos({ orders, productById, advanceOrder }) {
   const cols = STATUSES;
   return (
-    <div className="grid grid-cols-5 gap-3 items-start">
+    // En móvil el tablero se desliza en horizontal (una columna por pantalla);
+    // desde md en adelante vuelve a ser la grilla de 5 columnas.
+    <div className="flex gap-3 overflow-x-auto snap-x pb-2 -mx-4 px-4 md:mx-0 md:px-0 md:overflow-visible md:grid md:grid-cols-3 xl:grid-cols-5 items-start">
       {cols.map((status) => {
         const list = orders.filter((o) => o.status === status);
         return (
-          <div key={status} className="flex flex-col gap-2">
+          <div key={status} className="flex flex-col gap-2 shrink-0 snap-start w-[78%] max-w-[300px] md:w-auto md:max-w-none md:shrink">
             <div className="flex items-center justify-between px-1">
               <span className="text-xs font-bold uppercase tracking-wide" style={{ color: C.inkSoft }}>
                 {STATUS_LABEL[status]}
@@ -500,7 +536,7 @@ function Clientes({ customers, showToast }) {
 
   return (
     <div>
-      <div className="relative mb-3 max-w-xs">
+      <div className="relative mb-3 w-full sm:max-w-xs">
         <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2" style={{ color: C.muted }} />
         <input
           value={q}
@@ -510,7 +546,50 @@ function Clientes({ customers, showToast }) {
           style={{ border: `1px solid ${C.border}`, background: C.paper, color: C.ink }}
         />
       </div>
-      <div className="rounded-lg overflow-hidden" style={{ border: `1px solid ${C.border}` }}>
+
+      {/* Móvil: una tarjeta por cliente */}
+      <div className="flex flex-col gap-2 md:hidden">
+        {sorted.map((c) => {
+          const d = daysSince(c.lastOrder);
+          const inactive = d > 30;
+          return (
+            <div key={c.id} className="rounded-lg p-3 flex flex-col gap-1.5" style={{ background: C.paper, border: `1px solid ${C.border}` }}>
+              <div className="flex items-start justify-between gap-2">
+                <span className="text-sm font-semibold" style={{ color: C.ink }}>{c.name}</span>
+                <span className="flex items-center gap-1 text-xs shrink-0" style={{ color: inactive ? C.crustDark : C.muted }}>
+                  <Clock size={11} /> hace {d}d
+                </span>
+              </div>
+              <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs" style={{ color: C.inkSoft }}>
+                <span className="flex items-center gap-1"><Phone size={11} /> {c.phone}</span>
+                <span className="flex items-center gap-1"><MapPin size={11} /> {c.address}</span>
+              </div>
+              <div className="text-xs" style={{ color: C.muted }}>
+                {c.prefs} · {c.orders} pedido{c.orders === 1 ? "" : "s"}
+              </div>
+              {inactive ? (
+                <button
+                  onClick={() => showToast(`Oferta enviada a ${c.name}`)}
+                  className="mt-1 flex items-center justify-center gap-1 text-xs font-semibold py-1.5 rounded"
+                  style={{ background: C.basilBg, color: C.basilDark }}
+                >
+                  <Send size={11} /> Enviar oferta
+                </button>
+              ) : (
+                <div><Badge tone="basil">Activo</Badge></div>
+              )}
+            </div>
+          );
+        })}
+        {sorted.length === 0 && (
+          <div className="text-xs rounded-md p-4 text-center" style={{ border: `1px dashed ${C.border}`, color: C.muted }}>
+            Sin clientes para mostrar
+          </div>
+        )}
+      </div>
+
+      {/* Escritorio: tabla completa */}
+      <div className="hidden md:block rounded-lg overflow-hidden" style={{ border: `1px solid ${C.border}` }}>
         <table className="w-full text-sm" style={{ background: C.paper }}>
           <thead>
             <tr style={{ background: C.cream, color: C.muted }}>
@@ -576,6 +655,10 @@ function Clientes({ customers, showToast }) {
 // ---------- Reportes ----------
 const PAY_COLORS = { Efectivo: C.basil, Transferencia: C.crust, "Débito": C.tomato, "Crédito": C.inkSoft };
 
+// Los nombres del catálogo son largos ("Muzzarella con Morrón — Familiar"):
+// en el eje de los gráficos se recortan para que entren en pantallas chicas.
+const shortLabel = (name) => (name.length > 18 ? `${name.slice(0, 17)}…` : name);
+
 function Reportes({ orders, productById, movements, ingredients }) {
   const ingredientById = useMemo(() => Object.fromEntries(ingredients.map((i) => [i.id, i])), [ingredients]);
 
@@ -598,6 +681,7 @@ function Reportes({ orders, productById, movements, ingredients }) {
     orders.forEach((o) => o.items.forEach((it) => (tally[it.id] = (tally[it.id] || 0) + it.qty)));
     return Object.entries(tally)
       .sort((a, b) => b[1] - a[1])
+      .slice(0, 10)
       .map(([id, qty]) => ({ name: productById[id]?.name || "(producto eliminado)", qty }));
   }, [orders, productById]);
 
@@ -621,14 +705,14 @@ function Reportes({ orders, productById, movements, ingredients }) {
 
   return (
     <div className="flex flex-col gap-5">
-      <div className="grid grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 xl:grid-cols-4 gap-3">
         <MetricCard icon={DollarSign} label="Ventas (histórico)" value={fmtMoney(totalSales)} tone="tomato" />
         <MetricCard icon={TrendingUp} label="Ganancia estimada" value={fmtMoney(estProfit)} tone="basil" sub="~32% margen" />
         <MetricCard icon={ShoppingBag} label="Pedidos entregados" value={orders.length} tone="ink" />
         <MetricCard icon={ClipboardList} label="Ticket promedio" value={fmtMoney(avgTicket)} tone="crust" />
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <div className="rounded-lg p-4" style={{ background: C.paper, border: `1px solid ${C.border}` }}>
           <h3 className="text-sm font-semibold mb-3" style={{ color: C.ink }}>
             Ventas por día
@@ -669,16 +753,16 @@ function Reportes({ orders, productById, movements, ingredients }) {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <div className="rounded-lg p-4" style={{ background: C.paper, border: `1px solid ${C.border}` }}>
           <h3 className="text-sm font-semibold mb-3" style={{ color: C.ink }}>
             Productos más vendidos
           </h3>
           <ResponsiveContainer width="100%" height={220}>
-            <BarChart data={topProducts} layout="vertical" margin={{ left: 20 }}>
+            <BarChart data={topProducts} layout="vertical" margin={{ left: 4 }}>
               <CartesianGrid strokeDasharray="3 3" stroke={C.border} horizontal={false} />
               <XAxis type="number" tick={{ fontSize: 11, fill: C.muted }} />
-              <YAxis type="category" dataKey="name" tick={{ fontSize: 11, fill: C.inkSoft }} width={140} />
+              <YAxis type="category" dataKey="name" tick={{ fontSize: 11, fill: C.inkSoft }} width={110} tickFormatter={shortLabel} />
               <Tooltip contentStyle={{ fontSize: 12 }} />
               <Bar dataKey="qty" fill={C.tomato} radius={[0, 4, 4, 0]} />
             </BarChart>
@@ -690,10 +774,10 @@ function Reportes({ orders, productById, movements, ingredients }) {
             Consumo de ingredientes (kg)
           </h3>
           <ResponsiveContainer width="100%" height={220}>
-            <BarChart data={consumptionByIngredient} layout="vertical" margin={{ left: 20 }}>
+            <BarChart data={consumptionByIngredient} layout="vertical" margin={{ left: 4 }}>
               <CartesianGrid strokeDasharray="3 3" stroke={C.border} horizontal={false} />
               <XAxis type="number" tick={{ fontSize: 11, fill: C.muted }} />
-              <YAxis type="category" dataKey="name" tick={{ fontSize: 11, fill: C.inkSoft }} width={140} />
+              <YAxis type="category" dataKey="name" tick={{ fontSize: 11, fill: C.inkSoft }} width={110} tickFormatter={shortLabel} />
               <Tooltip contentStyle={{ fontSize: 12 }} />
               <Bar dataKey="kg" fill={C.basil} radius={[0, 4, 4, 0]} />
             </BarChart>
@@ -713,25 +797,27 @@ function NewOrderModal({ customers, products, onClose, onCreate }) {
   const [channel, setChannel] = useState("WhatsApp");
   const [pay, setPay] = useState("Efectivo");
   const [items, setItems] = useState([]);
-  const [prodSel, setProdSel] = useState(products[0]?.id || "");
-  const [qty, setQty] = useState(1);
   const [submitting, setSubmitting] = useState(false);
 
   const productById = useMemo(() => Object.fromEntries(products.map((p) => [p.id, p])), [products]);
+  const qtyById = useMemo(() => Object.fromEntries(items.map((it) => [it.id, it.qty])), [items]);
   const total = itemsTotal(items, pay === "Crédito", productById);
 
-  const addItem = () => {
-    if (!prodSel) return;
+  const addItem = (product) =>
     setItems((prev) => {
-      const idx = prev.findIndex((it) => it.id === prodSel);
-      if (idx >= 0) {
-        const copy = [...prev];
-        copy[idx] = { ...copy[idx], qty: copy[idx].qty + qty };
-        return copy;
-      }
-      return [...prev, { id: prodSel, qty }];
+      const idx = prev.findIndex((it) => it.id === product.id);
+      if (idx < 0) return [...prev, { id: product.id, qty: 1 }];
+      const copy = [...prev];
+      copy[idx] = { ...copy[idx], qty: copy[idx].qty + 1 };
+      return copy;
     });
-  };
+
+  const changeQty = (id, delta) =>
+    setItems((prev) =>
+      prev
+        .map((it) => (it.id === id ? { ...it, qty: it.qty + delta } : it))
+        .filter((it) => it.qty > 0)
+    );
 
   const removeItem = (id) => setItems((prev) => prev.filter((it) => it.id !== id));
 
@@ -745,15 +831,17 @@ function NewOrderModal({ customers, products, onClose, onCreate }) {
 
   return (
     <div
-      className="fixed inset-0 flex items-center justify-center z-50 p-4"
+      className="fixed inset-0 flex items-end sm:items-center justify-center z-50 sm:p-4"
       style={{ background: "rgba(43,35,32,0.45)" }}
+      onClick={onClose}
     >
       <div
-        className="w-full max-w-md rounded-lg flex flex-col"
-        style={{ background: C.paper, maxHeight: "88vh" }}
+        className="w-full sm:max-w-lg rounded-t-2xl sm:rounded-lg flex flex-col max-h-[92dvh] sm:max-h-[88vh]"
+        style={{ background: C.paper }}
+        onClick={(e) => e.stopPropagation()}
       >
         <div
-          className="flex items-center justify-between px-5 py-4"
+          className="flex items-center justify-between px-4 sm:px-5 py-4"
           style={{ borderBottom: `1px solid ${C.border}` }}
         >
           <h2 className="text-base font-bold" style={{ color: C.ink }}>
@@ -764,8 +852,8 @@ function NewOrderModal({ customers, products, onClose, onCreate }) {
           </button>
         </div>
 
-        <div className="overflow-auto px-5 py-4 flex flex-col gap-3">
-          <div className="grid grid-cols-2 gap-2">
+        <div className="overflow-auto px-4 sm:px-5 py-4 flex flex-col gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             <div className="flex flex-col gap-1">
               <label className="text-xs font-medium" style={{ color: C.muted }}>Cliente</label>
               <input
@@ -855,47 +943,40 @@ function NewOrderModal({ customers, products, onClose, onCreate }) {
 
           <div style={{ borderTop: `1px solid ${C.border}` }} className="pt-3 flex flex-col gap-2">
             <label className="text-xs font-medium" style={{ color: C.muted }}>Productos</label>
-            <div className="flex gap-2">
-              <select
-                value={prodSel}
-                onChange={(e) => setProdSel(e.target.value)}
-                className="flex-1 px-2.5 py-1.5 rounded text-sm outline-none"
-                style={{ border: `1px solid ${C.border}` }}
-              >
-                {products.map((p) => (
-                  <option key={p.id} value={p.id}>{p.name}</option>
-                ))}
-              </select>
-              <input
-                type="number"
-                min={1}
-                value={qty}
-                onChange={(e) => setQty(Math.max(1, parseInt(e.target.value) || 1))}
-                className="w-14 px-2 py-1.5 rounded text-sm outline-none"
-                style={{ border: `1px solid ${C.border}` }}
-              />
-              <button
-                onClick={addItem}
-                className="px-3 rounded text-sm font-semibold"
-                style={{ background: C.crust, color: "#fff" }}
-              >
-                <Plus size={15} />
-              </button>
-            </div>
+            <ProductPicker products={products} onAdd={addItem} qtyById={qtyById} />
 
             {items.length > 0 && (
               <div className="flex flex-col gap-1.5 mt-1">
                 {items.map((it) => (
-                  <div key={it.id} className="flex items-center justify-between text-sm">
-                    <span style={{ color: C.inkSoft }}>{it.qty}x {productById[it.id]?.name}</span>
-                    <div className="flex items-center gap-2">
-                      <span style={{ color: C.ink }} className="font-medium">
-                        {fmtMoney((productById[it.id]?.price || 0) * it.qty)}
-                      </span>
-                      <button onClick={() => removeItem(it.id)}>
-                        <X size={13} style={{ color: C.muted }} />
+                  <div key={it.id} className="flex items-center gap-2 text-sm">
+                    <div className="flex items-center gap-1 shrink-0">
+                      <button
+                        onClick={() => changeQty(it.id, -1)}
+                        className="w-7 h-7 rounded flex items-center justify-center"
+                        style={{ border: `1px solid ${C.border}`, color: C.inkSoft }}
+                        aria-label="Quitar uno"
+                      >
+                        <Minus size={13} />
+                      </button>
+                      <span className="w-6 text-center font-semibold" style={{ color: C.ink }}>{it.qty}</span>
+                      <button
+                        onClick={() => changeQty(it.id, 1)}
+                        className="w-7 h-7 rounded flex items-center justify-center"
+                        style={{ border: `1px solid ${C.border}`, color: C.inkSoft }}
+                        aria-label="Agregar uno"
+                      >
+                        <Plus size={13} />
                       </button>
                     </div>
+                    <span className="flex-1 min-w-0 truncate" style={{ color: C.inkSoft }}>
+                      {productById[it.id]?.name || "(producto eliminado)"}
+                    </span>
+                    <span style={{ color: C.ink }} className="font-medium shrink-0">
+                      {fmtMoney((productById[it.id]?.price || 0) * it.qty)}
+                    </span>
+                    <button onClick={() => removeItem(it.id)} className="shrink-0 p-1" aria-label="Sacar del pedido">
+                      <X size={13} style={{ color: C.muted }} />
+                    </button>
                   </div>
                 ))}
               </div>
@@ -904,8 +985,8 @@ function NewOrderModal({ customers, products, onClose, onCreate }) {
         </div>
 
         <div
-          className="px-5 py-4 flex items-center justify-between"
-          style={{ borderTop: `1px solid ${C.border}` }}
+          className="px-4 sm:px-5 py-4 flex items-center justify-between gap-3"
+          style={{ borderTop: `1px solid ${C.border}`, paddingBottom: "max(1rem, env(safe-area-inset-bottom))" }}
         >
           <div>
             <div className="text-xs" style={{ color: C.muted }}>Total</div>
@@ -914,7 +995,7 @@ function NewOrderModal({ customers, products, onClose, onCreate }) {
           <button
             disabled={!canSubmit}
             onClick={handleSubmit}
-            className="px-4 py-2 rounded-md text-sm font-semibold text-white"
+            className="flex-1 sm:flex-none px-4 py-2.5 rounded-md text-sm font-semibold text-white"
             style={{ background: canSubmit ? C.tomato : C.border, cursor: canSubmit ? "pointer" : "not-allowed" }}
           >
             {submitting ? "Creando..." : "Crear pedido"}

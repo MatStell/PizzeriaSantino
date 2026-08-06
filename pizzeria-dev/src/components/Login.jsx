@@ -31,17 +31,14 @@ export default function Login() {
 
   return (
     <div
-      className="w-full flex items-center justify-center"
+      className="w-full min-h-[100dvh] flex items-center justify-center p-4"
       style={{
         fontFamily: "'Inter', system-ui, sans-serif",
         background: C.cream,
-        minHeight: 640,
-        borderRadius: 12,
-        border: `1px solid ${C.border}`,
       }}
     >
       <div
-        className="w-full max-w-sm rounded-lg p-7"
+        className="w-full max-w-sm rounded-lg p-6 sm:p-7"
         style={{ background: C.paper, border: `1px solid ${C.border}` }}
       >
         <div style={{ fontFamily: "'Caveat', cursive", fontSize: 32, lineHeight: 1, color: C.ink }}>

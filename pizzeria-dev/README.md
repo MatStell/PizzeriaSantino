@@ -65,11 +65,19 @@ documentos.
 ### Catálogo real (empanadas, faina, pizzas y promos)
 
 Con el mismo `serviceAccountKey.json` del paso anterior, `npm run seed:menu`
-carga el catálogo real de la pizzería (30 empanadas, faina, 8 pizzas
-familiares y las promociones de almuerzo/todo el día/mostrador) en la
-colección `products`, con precios. Se puede correr las veces que haga
-falta: si cambian los precios, editá `scripts/seedMenu.mjs` y volvé a
-correrlo.
+carga el catálogo real de la pizzería en la colección `products` (277
+productos): 31 empanadas, 8 opciones de faina, 51 gustos de pizza en sus 4
+tamaños (individual, grande, familiar y 1/2 familiar), 8 pizzas familiares
+de varios sabores y las promociones de almuerzo / todo el día / mostrador.
+
+El menú vive en `src/data/catalog.js`: si cambian los precios o hay un gusto
+nuevo, se edita ese archivo y se vuelve a correr `npm run seed:menu` (escribe
+siempre los mismos documentos por id, así que se puede repetir sin duplicar).
+
+Además del `name`, `cat` y `price` que usan Pedidos y Stock, cada producto
+guarda `code` (el código de la empanada), `flavor`, `size` y `keywords` —los
+ingredientes del gusto— que son los que alimentan el buscador del modal de
+pedidos.
 
 ## 4. Correr la app
 
@@ -94,6 +102,9 @@ src/services/stock.js           reponer/ajustar stock, recetario, movimientos (t
 src/services/orders.js          crear pedido (descuenta stock) y avanzar estado
 src/components/Login.jsx        pantalla de login
 src/components/Stock.jsx        módulo de control de stock (foco principal de la app)
+src/components/ProductPicker.jsx buscador de gustos para armar el pedido
+src/data/catalog.js             el menú completo (fuente de verdad de precios)
+src/utils/search.js             búsqueda sin acentos por nombre, código o ingrediente
 src/App.jsx                    layout, Dashboard, Pedidos, Clientes, Reportes
 scripts/seed.mjs               carga de datos iniciales de demostración (una sola vez)
 scripts/seedMenu.mjs           carga el catálogo real (empanadas, faina, pizzas, promos)

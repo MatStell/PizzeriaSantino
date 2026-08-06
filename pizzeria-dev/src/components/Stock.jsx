@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from "react";
-import { AlertTriangle, Plus, X, PackagePlus, ClipboardEdit, Pencil, Check } from "lucide-react";
+import { AlertTriangle, Plus, X, PackagePlus, ClipboardEdit, Pencil, Check, Search } from "lucide-react";
 import { C } from "../theme.js";
+import { buildSearchIndex, searchIndex } from "../utils/search.js";
 import {
   restock,
   adjustStock,
@@ -38,7 +39,7 @@ export default function Stock({ ingredients, products, recipes, movements, showT
 
   return (
     <div className="flex flex-col gap-5">
-      <div className="grid grid-cols-2 gap-5">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
         <div>
           <div className="flex items-center justify-between mb-3">
             <h3 className="text-sm font-semibold" style={{ color: C.ink }}>
@@ -70,27 +71,15 @@ export default function Stock({ ingredients, products, recipes, movements, showT
           </div>
         </div>
 
-        <div>
-          <h3 className="text-sm font-semibold mb-3" style={{ color: C.ink }}>
-            Recetario
-          </h3>
-          <div className="rounded-lg p-4 flex flex-col gap-3" style={{ background: C.board, border: "6px solid #4A3826" }}>
-            {products.map((p) => (
-              <RecipeCard key={p.id} product={p} recipe={recipes[p.id] || {}} ingredients={ingredients} showToast={showToast} />
-            ))}
-            {products.length === 0 && (
-              <span className="text-xs" style={{ color: "#B9C4B4" }}>Sin productos cargados todavía</span>
-            )}
-          </div>
-        </div>
+        <Recetario products={products} recipes={recipes} ingredients={ingredients} showToast={showToast} />
       </div>
 
       <div>
         <h3 className="text-sm font-semibold mb-3" style={{ color: C.ink }}>
           Historial de movimientos
         </h3>
-        <div className="rounded-lg overflow-hidden" style={{ border: `1px solid ${C.border}` }}>
-          <table className="w-full text-sm" style={{ background: C.paper }}>
+        <div className="rounded-lg overflow-x-auto" style={{ border: `1px solid ${C.border}` }}>
+          <table className="w-full text-sm min-w-[520px]" style={{ background: C.paper }}>
             <thead>
               <tr style={{ background: C.cream, color: C.muted }}>
                 <th className="text-left px-3 py-2 font-medium">Fecha</th>
@@ -144,6 +133,55 @@ export default function Stock({ ingredients, products, recipes, movements, showT
       {addOpen && (
         <AddIngredientModal onClose={() => setAddOpen(false)} showToast={showToast} />
       )}
+    </div>
+  );
+}
+
+// El catálogo tiene cientos de gustos, así que el recetario se busca en vez
+// de listarse entero: se muestran las recetas que coinciden con lo escrito.
+const RECIPE_LIMIT = 25;
+
+function Recetario({ products, recipes, ingredients, showToast }) {
+  const [q, setQ] = useState("");
+  const index = useMemo(() => buildSearchIndex(products), [products]);
+  const { items, total } = useMemo(
+    () => searchIndex(index, q, { limit: RECIPE_LIMIT }),
+    [index, q]
+  );
+
+  return (
+    <div>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
+        <h3 className="text-sm font-semibold" style={{ color: C.ink }}>
+          Recetario
+        </h3>
+        <div className="relative w-full sm:max-w-[220px]">
+          <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2" style={{ color: C.muted }} />
+          <input
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            placeholder="Buscar producto o gusto..."
+            className="w-full pl-7 pr-3 py-1.5 rounded-md text-xs outline-none"
+            style={{ border: `1px solid ${C.border}`, background: C.paper, color: C.ink }}
+          />
+        </div>
+      </div>
+      <div className="rounded-lg p-4 flex flex-col gap-3" style={{ background: C.board, border: "6px solid #4A3826" }}>
+        {items.map((p) => (
+          <RecipeCard key={p.id} product={p} recipe={recipes[p.id] || {}} ingredients={ingredients} showToast={showToast} />
+        ))}
+        {products.length === 0 && (
+          <span className="text-xs" style={{ color: "#B9C4B4" }}>Sin productos cargados todavía</span>
+        )}
+        {products.length > 0 && items.length === 0 && (
+          <span className="text-xs" style={{ color: "#B9C4B4" }}>Ningún producto coincide con “{q}”</span>
+        )}
+        {total > items.length && (
+          <span className="text-xs" style={{ color: "#B9C4B4" }}>
+            Mostrando {items.length} de {total} productos — buscá para ver el resto
+          </span>
+        )}
+      </div>
     </div>
   );
 }
