@@ -72,7 +72,13 @@ export default function Stock({ ingredients, products, recipes, movements, showT
           </div>
         </div>
 
-        <Recetario products={products} recipes={recipes} ingredients={ingredients} showToast={showToast} />
+        <Recetario
+          products={products}
+          recipes={recipes}
+          ingredients={ingredients}
+          showToast={showToast}
+          onAddIngredient={() => setAddOpen(true)}
+        />
       </div>
 
       <div>
@@ -142,7 +148,7 @@ export default function Stock({ ingredients, products, recipes, movements, showT
 // de listarse entero: se muestran las recetas que coinciden con lo escrito.
 const RECIPE_LIMIT = 25;
 
-function Recetario({ products, recipes, ingredients, showToast }) {
+function Recetario({ products, recipes, ingredients, showToast, onAddIngredient }) {
   const [q, setQ] = useState("");
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -193,7 +199,7 @@ function Recetario({ products, recipes, ingredients, showToast }) {
       </div>
       <div className="rounded-lg p-4 flex flex-col gap-3" style={{ background: C.board, border: "6px solid #4A3826" }}>
         {items.map((p) => (
-          <RecipeCard key={p.id} product={p} recipe={recipes[p.id] || {}} ingredients={ingredients} showToast={showToast} />
+          <RecipeCard key={p.id} product={p} recipe={recipes[p.id] || {}} ingredients={ingredients} showToast={showToast} onAddIngredient={onAddIngredient} />
         ))}
         {products.length === 0 && (
           <div className="flex flex-col items-start gap-2">
@@ -461,7 +467,7 @@ function AddIngredientModal({ onClose, showToast }) {
   );
 }
 
-function RecipeCard({ product, recipe, ingredients, showToast }) {
+function RecipeCard({ product, recipe, ingredients, showToast, onAddIngredient }) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(recipe);
   const [newIngId, setNewIngId] = useState("");
@@ -537,7 +543,25 @@ function RecipeCard({ product, recipe, ingredients, showToast }) {
             </div>
           ))}
 
-          {available.length > 0 && (
+          {/* Sin ingredientes no hay nada para elegir: el editor quedaba vacío
+              y no se entendía por qué. */}
+          {ingredients.length === 0 ? (
+            <div className="flex flex-col items-start gap-1.5 mt-1">
+              <span className="text-xs" style={{ color: "#B9C4B4" }}>
+                Todavía no cargaste ingredientes, así que no hay nada para poner en
+                la receta. Agregalos primero (muzzarella, harina, jamón...).
+              </span>
+              {onAddIngredient && (
+                <button
+                  onClick={onAddIngredient}
+                  className="flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded"
+                  style={{ background: C.basil, color: "#fff" }}
+                >
+                  <Plus size={12} /> Agregar ingrediente
+                </button>
+              )}
+            </div>
+          ) : available.length > 0 ? (
             <div className="flex items-center gap-2 mt-1">
               <select
                 value={newIngId}
@@ -552,6 +576,10 @@ function RecipeCard({ product, recipe, ingredients, showToast }) {
               </select>
               <button onClick={addIng}><Plus size={13} style={{ color: "#B9C4B4" }} /></button>
             </div>
+          ) : (
+            <span className="text-xs mt-1" style={{ color: "#B9C4B4" }}>
+              Ya están todos los ingredientes en esta receta.
+            </span>
           )}
 
           <div className="flex gap-2 mt-1.5">
