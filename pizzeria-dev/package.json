@@ -11,6 +11,8 @@
     "seed:menu": "node scripts/seedMenu.mjs"
   },
   "dependencies": {
+    "@dataconnect/admin-generated": "file:src/dataconnect-admin-generated",
+    "@dataconnect/generated": "file:src/dataconnect-generated",
     "firebase": "^12.17.0",
     "lucide-react": "^0.383.0",
     "react": "^18.3.1",
