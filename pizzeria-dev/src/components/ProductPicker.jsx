@@ -108,7 +108,14 @@ export default function ProductPicker({ products, onAdd, qtyById = {} }) {
         className="rounded-md overflow-y-auto max-h-56 sm:max-h-64"
         style={{ border: `1px solid ${C.border}`, background: C.paper }}
       >
-        {items.length === 0 && (
+        {products.length === 0 && (
+          <div className="px-3 py-6 text-center text-xs" style={{ color: C.muted }}>
+            Todavía no hay productos en la base.
+            <br />
+            Cargalos desde <strong style={{ color: C.inkSoft }}>Stock → Cargar menú</strong>.
+          </div>
+        )}
+        {products.length > 0 && items.length === 0 && (
           <div className="px-3 py-6 text-center text-xs" style={{ color: C.muted }}>
             Sin resultados para “{q}”
           </div>

@@ -1,7 +1,8 @@
 import React, { useMemo, useState } from "react";
-import { AlertTriangle, Plus, X, PackagePlus, ClipboardEdit, Pencil, Check, Search } from "lucide-react";
+import { AlertTriangle, Plus, X, PackagePlus, ClipboardEdit, Pencil, Check, Search, RefreshCw } from "lucide-react";
 import { C } from "../theme.js";
 import { buildSearchIndex, searchIndex } from "../utils/search.js";
+import { loadCatalog, CATALOG_SIZE } from "../services/catalog.js";
 import {
   restock,
   adjustStock,
@@ -143,11 +144,26 @@ const RECIPE_LIMIT = 25;
 
 function Recetario({ products, recipes, ingredients, showToast }) {
   const [q, setQ] = useState("");
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
   const index = useMemo(() => buildSearchIndex(products), [products]);
   const { items, total } = useMemo(
     () => searchIndex(index, q, { limit: RECIPE_LIMIT }),
     [index, q]
   );
+
+  const cargarCatalogo = async () => {
+    setLoading(true);
+    try {
+      const n = await loadCatalog();
+      showToast(`Catálogo cargado: ${n} productos`);
+      setConfirmOpen(false);
+    } catch {
+      showToast("No se pudo cargar el catálogo");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div>
@@ -155,15 +171,24 @@ function Recetario({ products, recipes, ingredients, showToast }) {
         <h3 className="text-sm font-semibold" style={{ color: C.ink }}>
           Recetario
         </h3>
-        <div className="relative w-full sm:max-w-[220px]">
-          <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2" style={{ color: C.muted }} />
-          <input
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-            placeholder="Buscar producto o gusto..."
-            className="w-full pl-7 pr-3 py-1.5 rounded-md text-xs outline-none"
-            style={{ border: `1px solid ${C.border}`, background: C.paper, color: C.ink }}
-          />
+        <div className="flex items-center gap-2">
+          <div className="relative flex-1 sm:w-[200px]">
+            <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2" style={{ color: C.muted }} />
+            <input
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              placeholder="Buscar producto o gusto..."
+              className="w-full pl-7 pr-3 py-1.5 rounded-md text-xs outline-none"
+              style={{ border: `1px solid ${C.border}`, background: C.paper, color: C.ink }}
+            />
+          </div>
+          <button
+            onClick={() => setConfirmOpen(true)}
+            className="flex items-center gap-1 text-xs font-semibold px-2 py-1.5 rounded shrink-0 whitespace-nowrap"
+            style={{ background: C.crustBg, color: C.crustDark }}
+          >
+            <RefreshCw size={13} /> Cargar menú
+          </button>
         </div>
       </div>
       <div className="rounded-lg p-4 flex flex-col gap-3" style={{ background: C.board, border: "6px solid #4A3826" }}>
@@ -171,7 +196,19 @@ function Recetario({ products, recipes, ingredients, showToast }) {
           <RecipeCard key={p.id} product={p} recipe={recipes[p.id] || {}} ingredients={ingredients} showToast={showToast} />
         ))}
         {products.length === 0 && (
-          <span className="text-xs" style={{ color: "#B9C4B4" }}>Sin productos cargados todavía</span>
+          <div className="flex flex-col items-start gap-2">
+            <span className="text-xs" style={{ color: "#B9C4B4" }}>
+              Todavía no hay productos cargados. Tocá “Cargar menú” para escribir el
+              catálogo completo ({CATALOG_SIZE} productos) en la base de datos.
+            </span>
+            <button
+              onClick={() => setConfirmOpen(true)}
+              className="flex items-center gap-1 text-xs font-semibold px-2.5 py-1.5 rounded"
+              style={{ background: C.basil, color: "#fff" }}
+            >
+              <RefreshCw size={13} /> Cargar menú
+            </button>
+          </div>
         )}
         {products.length > 0 && items.length === 0 && (
           <span className="text-xs" style={{ color: "#B9C4B4" }}>Ningún producto coincide con “{q}”</span>
@@ -182,6 +219,44 @@ function Recetario({ products, recipes, ingredients, showToast }) {
           </span>
         )}
       </div>
+
+      {confirmOpen && (
+        <div className="fixed inset-0 flex items-center justify-center z-50 p-4" style={{ background: "rgba(43,35,32,0.45)" }}>
+          <div className="w-full max-w-sm rounded-lg" style={{ background: C.paper }}>
+            <div className="flex items-center justify-between px-5 py-4" style={{ borderBottom: `1px solid ${C.border}` }}>
+              <h2 className="text-base font-bold" style={{ color: C.ink }}>Cargar menú</h2>
+              <button onClick={() => setConfirmOpen(false)}><X size={18} style={{ color: C.muted }} /></button>
+            </div>
+            <div className="px-5 py-4 flex flex-col gap-2">
+              <p className="text-sm" style={{ color: C.inkSoft }}>
+                Se van a escribir los {CATALOG_SIZE} productos del menú (empanadas,
+                faina, pizzas por tamaño, familiares y promos) con sus precios.
+              </p>
+              <p className="text-xs" style={{ color: C.muted }}>
+                Si ya estaban cargados, se actualizan los precios y nombres. Los
+                pedidos y las recetas no se tocan.
+              </p>
+            </div>
+            <div className="px-5 py-4 flex justify-end gap-2" style={{ borderTop: `1px solid ${C.border}` }}>
+              <button
+                onClick={() => setConfirmOpen(false)}
+                className="px-3 py-2 rounded-md text-sm font-semibold"
+                style={{ border: `1px solid ${C.border}`, color: C.inkSoft }}
+              >
+                Cancelar
+              </button>
+              <button
+                disabled={loading}
+                onClick={cargarCatalogo}
+                className="px-4 py-2 rounded-md text-sm font-semibold text-white"
+                style={{ background: loading ? C.border : C.tomato }}
+              >
+                {loading ? "Cargando..." : "Cargar"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
